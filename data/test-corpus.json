@@ -1,0 +1,202 @@
+{
+  "_readme": "Ground-truth corpus for non-latin-tagger. Each case gives raw HTML/text input plus the expected tagged runs. 'expectedRuns' lists every substring the tool should wrap in <span lang=\"xx\">, in order. 'langCandidates' lists ISO 639-1/639-3 codes the disambiguation layer should consider, with the first entry being the expected default. 'ambiguityNote' flags cases where script alone can't determine language — these are the hardest, most important cases to test against. 'numbersToggleRelevant' flags cases where output differs depending on the includeNumbers setting.",
+
+  "cases": [
+    {
+      "id": "01-urdu-basic",
+      "description": "English sentence with embedded Urdu phrase, includes distinguishing Urdu letters (ں ھ ے) and trailing comma that must stay inside the run",
+      "input": "She greeted me with آپ کیسے ہیں، شکریہ, then switched back to English.",
+      "expectedRuns": [
+        { "text": "آپ کیسے ہیں، شکریہ", "script": "Arabic", "langCandidates": ["ur", "ar", "fa"], "ambiguityNote": "Contains ھ and ے — distinguishing Urdu letters not present in standard Arabic. Heuristic should resolve to ur with high confidence." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "02-arabic-basic",
+      "description": "English sentence with embedded Arabic phrase, no Urdu/Persian-distinguishing letters present — genuinely ambiguous by character set alone",
+      "input": "The sign read مرحبا بكم في القاهرة and pointed toward the exit.",
+      "expectedRuns": [
+        { "text": "مرحبا بكم في القاهرة", "script": "Arabic", "langCandidates": ["ar", "ur", "fa"], "ambiguityNote": "No distinguishing letters present. This is the hard case: character-set heuristics alone cannot resolve it. Should fall through to statistical language ID or default to ar with a low-confidence flag for user review." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "03-persian-basic",
+      "description": "English sentence with embedded Persian phrase, includes distinguishing letters (گ چ پ ژ)",
+      "input": "He whispered چگونه‌ای، دوست عزیز before leaving the room.",
+      "expectedRuns": [
+        { "text": "چگونه‌ای، دوست عزیز", "script": "Arabic", "langCandidates": ["fa", "ar", "ur"], "ambiguityNote": "Contains چ, گ — Persian-distinguishing letters. Heuristic should resolve to fa." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "04-hindi-basic",
+      "description": "English sentence with embedded Hindi (Devanagari) phrase including internal punctuation",
+      "input": "The teacher said, नमस्ते, कैसे हो? and waited for a reply.",
+      "expectedRuns": [
+        { "text": "नमस्ते, कैसे हो?", "script": "Devanagari", "langCandidates": ["hi", "mr", "sa", "ne"], "ambiguityNote": "Devanagari is shared by Hindi, Marathi, Nepali, and Sanskrit. Default to hi as most common in publishing contexts unless corpus-level metadata (e.g., document language declaration) suggests otherwise." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "05-hebrew-basic",
+      "description": "English sentence with embedded Hebrew phrase — near-unambiguous script-to-language mapping",
+      "input": "The inscription read שלום עליכם, welcoming all visitors.",
+      "expectedRuns": [
+        { "text": "שלום עליכם", "script": "Hebrew", "langCandidates": ["he", "yi"], "ambiguityNote": "Hebrew script is also used for Yiddish, but modern Hebrew vocabulary/orthography here makes he the safe default. Yiddish would show distinct spelling conventions (e.g., different vowel-pointing patterns)." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "06-chinese-basic",
+      "description": "English sentence with embedded Simplified Chinese phrase",
+      "input": "The menu listed 北京烤鸭 as the house specialty.",
+      "expectedRuns": [
+        { "text": "北京烤鸭", "script": "Han", "langCandidates": ["zh", "zh-Hans", "ja"], "ambiguityNote": "Han script is shared with Japanese kanji. Absence of hiragana/katakana and presence of simplified character forms should resolve this to zh-Hans." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "07-japanese-mixed-script",
+      "description": "English sentence with Japanese phrase mixing kanji, hiragana, and katakana — tests that mixed-script runs within one language stay unified",
+      "input": "She wrote ありがとうございます、スミスさん in her notebook.",
+      "expectedRuns": [
+        { "text": "ありがとうございます、スミスさん", "script": "Hiragana+Katakana+Han", "langCandidates": ["ja"], "ambiguityNote": "Presence of hiragana/katakana alongside any kanji is a strong, near-unambiguous signal for Japanese even though Han-only substrings would be ambiguous with Chinese." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "08-korean-basic",
+      "description": "English sentence with embedded Korean (Hangul) phrase — unambiguous script-to-language mapping",
+      "input": "The sign above the door read 환영합니다 in bold letters.",
+      "expectedRuns": [
+        { "text": "환영합니다", "script": "Hangul", "langCandidates": ["ko"], "ambiguityNote": "Hangul is used exclusively for Korean; no disambiguation needed." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "09-thai-basic",
+      "description": "English sentence with embedded Thai phrase including internal punctuation-like tone marks",
+      "input": "The vendor smiled and said สวัสดีค่ะ, ยินดีต้อนรับ warmly.",
+      "expectedRuns": [
+        { "text": "สวัสดีค่ะ, ยินดีต้อนรับ", "script": "Thai", "langCandidates": ["th"], "ambiguityNote": "Thai script is unambiguous. Tests that combining tone marks stay attached to base consonants via grapheme clustering." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "10-russian-cyrillic",
+      "description": "English sentence with embedded Russian phrase — Cyrillic ambiguity case (Russian vs. Ukrainian vs. Bulgarian vs. Serbian)",
+      "input": "The note simply said Привет, как дела? and nothing more.",
+      "expectedRuns": [
+        { "text": "Привет, как дела?", "script": "Cyrillic", "langCandidates": ["ru", "uk", "bg", "sr"], "ambiguityNote": "No і, ї, є, ґ (Ukrainian-distinguishing letters) present, and no ъ-heavy Bulgarian patterns. Should resolve to ru by default/statistical fallback; this is a good stress test for the same disambiguation architecture used for Arabic-script languages." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "11-ukrainian-cyrillic",
+      "description": "Cyrillic phrase containing Ukrainian-distinguishing letters (і, ї, є) to test the Cyrillic disambiguation heuristic",
+      "input": "На вулиці було тихо і темно, як завжди ввечері.",
+      "expectedRuns": [
+        { "text": "На вулиці було тихо і темно, як завжди ввечері.", "script": "Cyrillic", "langCandidates": ["uk", "ru", "bg"], "ambiguityNote": "Contains і and ї — letters not used in standard Russian orthography. Heuristic should resolve to uk with high confidence." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "12-numbers-western-digits",
+      "description": "Arabic phrase followed directly by Western Arabic numerals — primary test case for the numbers-include/exclude toggle",
+      "input": "الفصل رقم 12 يبدأ من هنا.",
+      "expectedRuns": [
+        {
+          "numbersIncluded": "الفصل رقم 12 يبدأ من هنا.",
+          "numbersExcluded": ["الفصل رقم", "يبدأ من هنا."],
+          "script": "Arabic",
+          "langCandidates": ["ar", "ur", "fa"]
+        }
+      ],
+      "numbersToggleRelevant": true,
+      "ambiguityNote": "With includeNumbers=true, '12' should NOT split the run since Western digits sit inline within Arabic text. With includeNumbers=false, the digit sequence should break the run into two separate spans."
+    },
+    {
+      "id": "13-numbers-eastern-arabic-indic-digits",
+      "description": "Arabic phrase using native Eastern Arabic-Indic numerals instead of Western digits",
+      "input": "الصفحة ١٢ من الكتاب.",
+      "expectedRuns": [
+        {
+          "numbersIncluded": "الصفحة ١٢ من الكتاب.",
+          "numbersExcluded": ["الصفحة", "١٢", "من الكتاب."],
+          "script": "Arabic",
+          "langCandidates": ["ar", "ur", "fa"]
+        }
+      ],
+      "numbersToggleRelevant": true,
+      "ambiguityNote": "Eastern Arabic-Indic digits (٠-٩) are their own Unicode block but functionally 'numbers within the run.' Confirms the numbers toggle treats both digit systems consistently. Also tests that the numeral system itself isn't a disambiguation signal on its own (both Arabic and Urdu texts commonly use either digit system)."
+    },
+    {
+      "id": "14-quoted-phrase-punctuation",
+      "description": "English sentence with a quoted non-Latin phrase — tests that quotation marks immediately adjacent to the run don't get incorrectly absorbed or incorrectly excluded",
+      "input": "He asked what \"तुम कैसे हो\" meant in English.",
+      "expectedRuns": [
+        { "text": "तुम कैसे हो", "script": "Devanagari", "langCandidates": ["hi"], "ambiguityNote": "The English straight quotation marks surrounding the phrase are Latin/Common-script punctuation adjacent to, not internal to, the non-Latin run — they should NOT be included in the span. Contrast with case 01 and 04 where punctuation is internal to the run and must be retained." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "15-code-switch-two-scripts-one-sentence",
+      "description": "Single sentence with two different non-Latin scripts in sequence, testing that runs break cleanly at the script boundary rather than merging",
+      "input": "The label showed both مرحبا and 你好 side by side on the poster.",
+      "expectedRuns": [
+        { "text": "مرحبا", "script": "Arabic", "langCandidates": ["ar", "ur", "fa"] },
+        { "text": "你好", "script": "Han", "langCandidates": ["zh", "ja"] }
+      ],
+      "numbersToggleRelevant": false,
+      "ambiguityNote": "Tests that the run-builder correctly terminates a run when script changes, even with only a single Latin word ('and') separating them."
+    },
+    {
+      "id": "16-sindhi-distinguishing-letters",
+      "description": "Arabic-script phrase in Sindhi, which has its own extended letter set (ڪ, ڏ, ڊ, ڀ, ٺ) beyond both Arabic and Urdu",
+      "input": "هي ڪتاب تمام سٺو آهي.",
+      "expectedRuns": [
+        { "text": "هي ڪتاب تمام سٺو آهي.", "script": "Arabic", "langCandidates": ["sd", "ur", "ar"], "ambiguityNote": "Contains ڪ and ٺ — Sindhi-specific letters absent from both Arabic and Urdu. Tests that the disambiguation table extends beyond the three most common Arabic-script languages and doesn't force a mis-tag to ur just because Sindhi letters superficially resemble Urdu's extended set." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "17-pashto-distinguishing-letters",
+      "description": "Arabic-script phrase in Pashto, with distinguishing letters (ږ, ښ, ځ, ډ)",
+      "input": "ته څنګه یې، زما ملګریه؟",
+      "expectedRuns": [
+        { "text": "ته څنګه یې، زما ملګریه؟", "script": "Arabic", "langCandidates": ["ps", "fa", "ur"], "ambiguityNote": "Contains څ and ږ — Pashto-specific letters. Good regression test alongside case 16 to confirm the heuristic table doesn't collapse all 'extra Arabic-script letters' into a single generic bucket." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "18-ambiguous-short-run-no-distinguishing-chars",
+      "description": "Very short Arabic-script run (a single common word) with no distinguishing letters and too little text for statistical language ID to work reliably",
+      "input": "He simply said شكرا and walked away.",
+      "expectedRuns": [
+        { "text": "شكرا", "script": "Arabic", "langCandidates": ["ar", "ur", "fa"], "ambiguityNote": "Deliberately adversarial: too short for n-gram statistical models to have real signal, and 'thank you' is a common loanword across Arabic, Urdu, and Persian speech. This case should trigger a low-confidence flag and surface the language picker to the user rather than silently guessing." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "19-devanagari-sanskrit-marker",
+      "description": "Devanagari phrase using classical/liturgical vocabulary and conjuncts typical of Sanskrit rather than conversational Hindi",
+      "input": "अथ योगानुशासनम् इति पतञ्जलिना उक्तम्।",
+      "expectedRuns": [
+        { "text": "अथ योगानुशासनम् इति पतञ्जलिना उक्तम्।", "script": "Devanagari", "langCandidates": ["sa", "hi"], "ambiguityNote": "Heavy conjunct consonant clusters and the danda (।) punctuation mark are strong statistical signals for Sanskrit over conversational Hindi. Tests whether the statistical fallback (not just character-set heuristics, since the alphabet is identical) correctly shifts the default away from hi." }
+      ],
+      "numbersToggleRelevant": false
+    },
+    {
+      "id": "20-mixed-latin-transliteration-inside-run",
+      "description": "A non-Latin run that contains an embedded Latin-script proper noun (e.g., a brand name), testing run-breaking behavior at a hard boundary case",
+      "input": "أعلنت شركة Google عن تحديث جديد اليوم.",
+      "expectedRuns": [
+        { "text": "أعلنت شركة", "script": "Arabic", "langCandidates": ["ar", "ur", "fa"] },
+        { "text": "عن تحديث جديد اليوم.", "script": "Arabic", "langCandidates": ["ar", "ur", "fa"] }
+      ],
+      "numbersToggleRelevant": false,
+      "ambiguityNote": "The Latin brand name 'Google' should break the Arabic run into two spans rather than being absorbed into either — proper nouns/brand names are Latin script and should never be force-included in a non-Latin span. This is the trickiest run-boundary case in the corpus and worth extra unit tests."
+    }
+  ]
+}
