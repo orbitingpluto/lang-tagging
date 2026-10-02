@@ -1,0 +1,28 @@
+{
+  "_generatedFrom": "https://raw.githubusercontent.com/unicode-org/cldr/main/common/supplemental/likelySubtags.xml",
+  "_generatedAt": "2026-09-30T02:19:27.238Z",
+  "_caveat": "Derived from CLDR likelySubtags.xml (population-weighted defaults), not an exhaustive list of every language a script has ever been used for. Treat as \"very likely safe,\" not proven unambiguous. Hand-edit if you find a gap. ISO 639-1 ONLY: languages with no 2-letter code (639-3-only) are dropped entirely from this table, and a script counts as \"deterministic\" here if it has exactly one 639-1 candidate — it may still have other 639-3-only languages using it in reality.",
+  "scripts": {
+    "Avst": "ae",
+    "Thaa": "dv",
+    "Grek": "el",
+    "Gujr": "gu",
+    "Armn": "hy",
+    "Yiii": "ii",
+    "Jpan": "ja",
+    "Geor": "ka",
+    "Khmr": "km",
+    "Knda": "kn",
+    "Kore": "ko",
+    "Laoo": "lo",
+    "Mlym": "ml",
+    "Mymr": "my",
+    "Orya": "or",
+    "Guru": "pa",
+    "Sinh": "si",
+    "Taml": "ta",
+    "Telu": "te",
+    "Thai": "th",
+    "Hans": "zh"
+  }
+}
