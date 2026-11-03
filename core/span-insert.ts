@@ -99,10 +99,16 @@ export function dropAlreadyTagged(
 ): Segment[] {
   if (!ancestorLang) return segments;
   const ancestor = primaryLang(ancestorLang);
+  
 
   const out: Segment[] = [];
   for (const seg of segments) {
-    const next: Segment = seg.candidates?.includes(ancestor) ? { text: seg.text } : { ...seg };
+    const isHanOnly = /^\p{Script=Han}+$/u.test(seg.text);
+
+    const next: Segment = seg.candidates?.includes(ancestor) ||
+                        (ancestor === 'ko' && isHanOnly) 
+                        ? { text: seg.text } 
+                        : { ...seg };
     const last = out[out.length - 1];
     if (last && isPlain(last) && isPlain(next)) {
       last.text += next.text;

@@ -239,4 +239,57 @@ describe('insertSpans', () => {
     console.log(textToSegments('こんにちは'));
   expect(tagHtml(input)).toBe(expected);
 });
+
+it('preserves Han text under a Korean ancestor while tagging Japanese kana', () => {
+  const input =
+    '<p><span lang="ko">한국어，こんにちは，世界！</span></p>';
+
+  const expected =
+    '<p><span lang="ko">한국어，<span lang="ja" data-candidates="ja">こんにちは</span>，世界！</span></p>';
+
+  expect(tagHtml(input)).toBe(expected);
+});
+
+it('preserves Han-only text under a Korean ancestor', () => {
+  const input = '<p><span lang="ko">한국어와 世界</span></p>';
+  const expected = '<p><span lang="ko">한국어와 世界</span></p>';
+
+  expect(tagHtml(input)).toBe(expected);
+});
+
+it('preserves Latin text and tags Japanese kana under a Korean ancestor', () => {
+  const input = '<p><span lang="ko">한국어 Hello こんにちは World</span></p>';
+
+  const expected =
+    '<p><span lang="ko">한국어 Hello <span lang="ja" data-candidates="ja">こんにちは</span> World</span></p>';
+
+  expect(tagHtml(input)).toBe(expected);
+});
+
+it('continues Japanese unification under a Japanese ancestor', () => {
+  const input = '<p><span lang="ja">こんにちは，世界！</span></p>';
+  const expected =
+    '<p><span lang="ja">こんにちは，世界！</span></p>';
+
+  expect(tagHtml(input)).toBe(expected);
+});
+
+it('preserves an author-authored Japanese override inside a Korean ancestor', () => {
+  const input =
+    '<p><span lang="ko">한국어 <span lang="ja">こんにちは，世界！</span></span></p>';
+
+  const expected =
+    '<p><span lang="ko">한국어 <span lang="ja">こんにちは，世界！</span></span></p>';
+
+  expect(tagHtml(input)).toBe(expected);
+});
+
+it('keeps punctuation outside Japanese spans under a Korean ancestor', () => {
+  const input = '<p><span lang="ko">한국어，こんにちは！世界。</span></p>';
+
+  const expected =
+    '<p><span lang="ko">한국어，<span lang="ja" data-candidates="ja">こんにちは</span>！世界。</span></p>';
+
+  expect(tagHtml(input)).toBe(expected);
+});
 });
