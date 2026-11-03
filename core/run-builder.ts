@@ -195,6 +195,13 @@ export function reduceChunks(chunks: Chunk[]): Run[] {
         currentRun.text += chunk.text;
       } else {
         closeRun();
+
+        // Flush pending punctuation BEFORE whitespace to preserve source order.
+      if (pendingAttachPrefix) {
+        pushCommon(pendingAttachPrefix);
+        pendingAttachPrefix = '';
+      }
+      
         pushCommon(chunk.text);
       }
       continue;

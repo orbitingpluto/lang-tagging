@@ -180,5 +180,18 @@ it('recognizes Japanese after an em dash when kana is present', () => {
     { text: '日本語かな', script: 'Jpan' }
   ]);
 });
+
+it('preserves punctuation before whitespace when no language run follows', () => {
+  expect(run(', ')).toEqual([
+    { text: ', ', script: 'Common' }
+  ]);
+});
+
+it('preserves leading punctuation and whitespace in source order', () => {
+  expect(run('" अ')).toEqual([
+    { text: '" ', script: 'Common' },
+    { text: 'अ', script: 'Devanagari' }
+  ]);
+});
 });
 
