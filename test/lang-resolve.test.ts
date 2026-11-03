@@ -27,6 +27,12 @@ describe('resolveLanguage', () => {
       });
     });
 
+    it('resolves the composite Jpan script (Han + kana) to Japanese with high confidence', () => {
+      expect(resolveLanguage(run('東京は日本の首都です', 'Jpan'))).toEqual({
+        lang: 'ja', candidates: ['ja'], confidence: 'high',
+      });
+    });
+
     it('resolves Katakana to Japanese with high confidence', () => {
       expect(resolveLanguage(run('スミス', 'Katakana'))).toEqual({
         lang: 'ja', candidates: ['ja'], confidence: 'high',

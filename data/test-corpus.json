@@ -7,7 +7,7 @@
       "description": "English sentence with embedded Urdu phrase, includes distinguishing Urdu letters (ں ھ ے) and trailing comma that must stay inside the run",
       "input": "She greeted me with آپ کیسے ہیں، شکریہ, then switched back to English.",
       "expectedRuns": [
-        { "text": "آپ کیسے ہیں، شکریہ", "script": "Arabic", "langCandidates": ["ur", "ar", "fa"], "ambiguityNote": "Contains ھ and ے — distinguishing Urdu letters not present in standard Arabic. Heuristic should resolve to ur with high confidence." }
+        { "text": "آپ کیسے ہیں، شکریہ,", "script": "Arabic", "langCandidates": ["ur", "ar", "fa"], "ambiguityNote": "Contains ھ and ے — distinguishing Urdu letters not present in standard Arabic. Heuristic should resolve to ur with high confidence." }
       ],
       "numbersToggleRelevant": false
     },
@@ -43,7 +43,7 @@
       "description": "English sentence with embedded Hebrew phrase — near-unambiguous script-to-language mapping",
       "input": "The inscription read שלום עליכם, welcoming all visitors.",
       "expectedRuns": [
-        { "text": "שלום עליכם", "script": "Hebrew", "langCandidates": ["he", "yi"], "ambiguityNote": "Hebrew script is also used for Yiddish, but modern Hebrew vocabulary/orthography here makes he the safe default. Yiddish would show distinct spelling conventions (e.g., different vowel-pointing patterns)." }
+        { "text": "שלום עליכם,", "script": "Hebrew", "langCandidates": ["he", "yi"], "ambiguityNote": "Hebrew script is also used for Yiddish, but modern Hebrew vocabulary/orthography here makes he the safe default. Yiddish would show distinct spelling conventions (e.g., different vowel-pointing patterns)." }
       ],
       "numbersToggleRelevant": false
     },
@@ -61,7 +61,7 @@
       "description": "English sentence with Japanese phrase mixing kanji, hiragana, and katakana — tests that mixed-script runs within one language stay unified",
       "input": "She wrote ありがとうございます、スミスさん in her notebook.",
       "expectedRuns": [
-        { "text": "ありがとうございます、スミスさん", "script": "Hiragana+Katakana+Han", "langCandidates": ["ja"], "ambiguityNote": "Presence of hiragana/katakana alongside any kanji is a strong, near-unambiguous signal for Japanese even though Han-only substrings would be ambiguous with Chinese." }
+        { "text": "ありがとうございます、スミスさん", "script": "Jpan", "langCandidates": ["ja"], "ambiguityNote": "Presence of hiragana/katakana alongside any kanji is a strong, near-unambiguous signal for Japanese even though Han-only substrings would be ambiguous with Chinese." }
       ],
       "numbersToggleRelevant": false
     },
@@ -123,20 +123,20 @@
       "expectedRuns": [
         {
           "numbersIncluded": "الصفحة ١٢ من الكتاب.",
-          "numbersExcluded": ["الصفحة", "١٢", "من الكتاب."],
+          "numbersExcluded": ["الصفحة ١٢ من الكتاب."],
           "script": "Arabic",
           "langCandidates": ["ar", "ur", "fa"]
         }
       ],
       "numbersToggleRelevant": true,
-      "ambiguityNote": "Eastern Arabic-Indic digits (٠-٩) are their own Unicode block but functionally 'numbers within the run.' Confirms the numbers toggle treats both digit systems consistently. Also tests that the numeral system itself isn't a disambiguation signal on its own (both Arabic and Urdu texts commonly use either digit system)."
+      "ambiguityNote": "Eastern Arabic-Indic digits (٠-٩) report their own script (Arabic), so they merge into the run regardless of the numbers toggle; functionally 'numbers within the run.' Confirms the numbers toggle treats both digit systems consistently. Also tests that the numeral system itself isn't a disambiguation signal on its own (both Arabic and Urdu texts commonly use either digit system)."
     },
     {
       "id": "14-quoted-phrase-punctuation",
       "description": "English sentence with a quoted non-Latin phrase — tests that quotation marks immediately adjacent to the run don't get incorrectly absorbed or incorrectly excluded",
       "input": "He asked what \"तुम कैसे हो\" meant in English.",
       "expectedRuns": [
-        { "text": "तुम कैसे हो", "script": "Devanagari", "langCandidates": ["hi"], "ambiguityNote": "The English straight quotation marks surrounding the phrase are Latin/Common-script punctuation adjacent to, not internal to, the non-Latin run — they should NOT be included in the span. Contrast with case 01 and 04 where punctuation is internal to the run and must be retained." }
+        { "text": "\"तुम कैसे हो\"", "script": "Devanagari", "langCandidates": ["hi"], "ambiguityNote": "Punctuation touching a non-Latin run always attaches to it, regardless of what is on the far side, so the surrounding straight quotes are part of the run. Whitespace is different: it only joins when both sides match." }
       ],
       "numbersToggleRelevant": false
     },

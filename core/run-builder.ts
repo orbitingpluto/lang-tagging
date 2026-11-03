@@ -12,13 +12,19 @@ type RawChunk =
   | { kind: 'anchor'; script: string; text: string } // actual script text
   | { kind: 'ws'; text: string } //whitespace
   | { kind: 'punct'; text: string } // non-whitespace/digit Common script characters
-  | { kind: 'digit'; text: string }; // western digits
+  | { kind: 'digit'; text: string } // western digits
+  | { kind: 'symbol'; text: string };
+
+function isPunctuation(text: string): boolean {
+  return /^\p{P}\p{M}*$/u.test(text);
+}
 
 function classifyRaw(text: string, script: string): RawChunk {
   if (script === 'Common') {
-    if (/^\s$/.test(text)) return { kind: 'ws', text };
-    if (/^\d$/.test(text)) return { kind: 'digit', text };
-    return { kind: 'punct', text };
+    if (/^\s$/u.test(text)) return { kind: 'ws', text };
+    if (/^\d$/u.test(text)) return { kind: 'digit', text };
+    if (isPunctuation(text)) return { kind: 'punct', text };
+    return { kind: 'symbol', text };
   }
   return { kind: 'anchor', script, text };
 }
@@ -73,6 +79,7 @@ export function chunkify(graphemes: ScriptedGrapheme[], includeNumbers: boolean)
 
   return raw.map((c, i): Chunk => {
     if (c.kind === 'punct') return { kind: 'attach', text: c.text };
+    if (c.kind === 'symbol') return { kind: 'hardbreak', text: c.text};
     if (c.kind !== 'digit') return c; // ws and anchor unchanged
 
     // digit processing
@@ -174,6 +181,45 @@ export function reduceChunks(chunks: Chunk[]): Run[] {
   return runArr;
 }
 
+// Japanese is written with three scripts at once (Han + Hiragana + Katakana),
+// so per-script run building would split one Japanese phrase into pieces.
+// This pass relabels those graphemes as the composite script "Jpan" (CLDR's
+// name for exactly this combination) wherever Japanese is evident.
+//
+// A "cluster" is a maximal stretch of Han/Hiragana/Katakana graphemes plus
+// non-whitespace Common characters (punctuation, digits) between them.
+// Whitespace ends a cluster. If a cluster contains any kana, all of it becomes
+// Jpan; a Han-only cluster is left alone, because it could be Chinese.
+const JAPANESE_PARTS = new Set(['Han', 'Hiragana', 'Katakana']);
+
+export function unifyJapanese(graphemes: ScriptedGrapheme[]): ScriptedGrapheme[] {
+  const result = graphemes.map((g) => ({ ...g }));
+  const inCluster = (g: ScriptedGrapheme) =>
+    JAPANESE_PARTS.has(g.script) ||
+   (g.script === 'Common' && (isPunctuation(g.text) || /^\d$/u.test(g.text)));
+
+  let i = 0;
+  while (i < result.length) {
+    if (!inCluster(result[i]!)) { i++; continue; }
+
+    let j = i;
+    let hasKana = false;
+    while (j < result.length && inCluster(result[j]!)) {
+      const script = result[j]!.script;
+      if (script === 'Hiragana' || script === 'Katakana') hasKana = true;
+      j++;
+    }
+
+    if (hasKana) {
+      for (let k = i; k < j; k++) {
+        if (JAPANESE_PARTS.has(result[k]!.script)) result[k]!.script = 'Jpan';
+      }
+    }
+    i = j;
+  }
+  return result;
+}
+
 // Public entry point 
 
 export function buildRuns(
@@ -181,6 +227,6 @@ export function buildRuns(
   options: { includeNumbers?: boolean } = {}
 ): Run[] {
   const { includeNumbers = true } = options;
-  const chunks = chunkify(graphemes, includeNumbers);
+  const chunks = chunkify(unifyJapanese(graphemes), includeNumbers);
   return reduceChunks(chunks);
 }

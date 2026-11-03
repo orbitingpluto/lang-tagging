@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Non-Latin Tagger</title>
+<style>
+  :root { --bg:#fff; --fg:#1d1d1f; --muted:#6b6b72; --line:#d9d9de; --accent:#2457d6; --warn:#b45309; --ok:#15803d; --hl:#fff3bf; --hlw:#ffd8d8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16161a; --fg:#ececf0; --muted:#9a9aa5; --line:#33333b; --accent:#7aa2ff; --warn:#f0a040; --ok:#4ade80; --hl:#4a4220; --hlw:#4d2626; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:960px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; } h2 { font-size:1.1rem; margin:0 0 8px; }
+  p.sub { color:var(--muted); margin:0 0 24px; }
+  section { margin-bottom:28px; }
+  textarea { width:100%; min-height:160px; font:14px/1.4 ui-monospace,monospace; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); }
+  button { font:inherit; padding:8px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+  button.secondary { background:transparent; color:var(--accent); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  .bar { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  .row { display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
+  .row.active { background:var(--hl); }
+  .row .txt { font-size:1.15rem; } .row .meta { color:var(--muted); font-size:.85rem; }
+  .row .ctl { display:flex; gap:6px; }
+  .row select, .row input { width:5.5rem; padding:6px 8px; font:inherit; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); text-align:center; }
+  .row input.bad { border-color:var(--warn); }
+  button.small { padding:2px 10px; font-size:.85rem; margin-top:4px; }
+  .row.needs { background:var(--hlw); }
+  iframe { width:100%; height:200px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  #msg { margin-top:10px; } .err { color:var(--warn); } .ok { color:var(--ok); }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Non-Latin Tagger</h1>
+  <p class="sub">Wraps non-Latin text in <code>&lt;span lang="…"&gt;</code> so screen readers pronounce it correctly. Paste an HTML fragment (body content only), review each tag, then copy the final HTML.</p>
+
+  <section>
+    <h2>1. Paste your HTML</h2>
+    <label for="input" class="meta">HTML fragment</label>
+    <textarea id="input" spellcheck="false" placeholder="<p>Hello, <em>مرحبا</em>…</p>"></textarea>
+    <div class="bar">
+      <label><input type="checkbox" id="numbers" checked> Tag numbers next to non-Latin text</label>
+      <button id="tag">Find non-Latin text</button>
+    </div>
+  </section>
+
+  <section id="review" hidden>
+    <h2>2. Review languages</h2>
+    <p class="meta">Every tag is yours to confirm. Pick a language from the suggestions, or choose “Other…” and type a two-letter code (e.g. <code>ur</code>). Uncertain guesses are left untagged until you confirm them, and every row needs a language before you can finish.</p>
+    <div id="rows"></div>
+    <h2 style="margin-top:20px">Preview</h2>
+    <iframe id="preview" sandbox="" title="Preview of tagged HTML"></iframe>
+    <div class="bar"><button id="finalize">Finish and get final HTML</button></div>
+    <div id="msg" role="status" aria-live="polite"></div>
+  </section>
+
+  <section id="result" hidden>
+    <h2>3. Final HTML</h2>
+    <textarea id="output" readonly spellcheck="false"></textarea>
+    <div class="bar"><button id="copy" class="secondary">Copy to clipboard</button></div>
+  </section>
+</main>
+<script type="module" src="./main.ts"></script>
+</body>
+</html>

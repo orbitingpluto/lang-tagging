@@ -34,6 +34,8 @@ const SPECIAL_CASES: Record<string, LangResolution> = {
   },
   Hiragana: { lang: 'ja', candidates: ['ja'], confidence: 'high' },
   Katakana: { lang: 'ja', candidates: ['ja'], confidence: 'high' },
+  // Composite label produced by unifyJapanese (Han + kana together).
+  Jpan: { lang: 'ja', candidates: ['ja'], confidence: 'high' },
 };
 
 const deterministicTable: Record<string, string> = deterministicData.scripts;
