@@ -5,18 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Non-Latin Tagger</title>
 <style>
-  :root { --bg:#fff; --fg:#1d1d1f; --muted:#6b6b72; --line:#d9d9de; --accent:#2457d6; --warn:#b45309; --ok:#15803d; --hl:#fff3bf; --hlw:#ffd8d8; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#16161a; --fg:#ececf0; --muted:#9a9aa5; --line:#33333b; --accent:#7aa2ff; --warn:#f0a040; --ok:#4ade80; --hl:#4a4220; --hlw:#4d2626; } }
-  * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--fg); }
-  main { max-width:960px; margin:0 auto; padding:24px 16px 64px; }
-  h1 { font-size:1.5rem; margin:0 0 4px; } h2 { font-size:1.1rem; margin:0 0 8px; }
-  p.sub { color:var(--muted); margin:0 0 24px; }
-  section { margin-bottom:28px; }
+  :root {
+  --bg: #f4f5f9;
+  --surface: #ffffff;
+  --fg: #20243a;
+  --muted: #697087;
+  --line: #e3e5ed;
+  --accent: #5146d8;
+  --warn: #a64b24;
+  --ok: #237a55;
+  --hl: #f1efff;
+  --hlw: #fff0ed;
+  --shadow: 0 3px 14px rgba(30, 35, 65, 0.045);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171923;
+    --surface: #202330;
+    --fg: #eef0fa;
+    --muted: #a5aac0;
+    --line: #373b4d;
+    --accent: #a69cff;
+    --warn: #ffad8e;
+    --ok: #79d6a8;
+    --hl: #302d49;
+    --hlw: #482e31;
+    --shadow: none;
+  }
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font: 16px/1.6 system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.045em;
+  margin: 0 0 12px;
+}
+
+h2 {
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+p.sub {
+  color: var(--muted);
+  max-width: 680px;
+  margin: 0 0 32px;
+  line-height: 1.7;
+}
+
+section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
   textarea { width:100%; min-height:160px; font:14px/1.4 ui-monospace,monospace; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); }
   button { font:inherit; padding:8px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
   button.secondary { background:transparent; color:var(--accent); }
-  button:focus-visible, input:focus-visible, textarea:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
   .bar { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-top:10px; }
   .row { display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); }
   .row.active { background:var(--hl); }
@@ -26,7 +94,89 @@
   .row input.bad { border-color:var(--warn); }
   button.small { padding:2px 10px; font-size:.85rem; margin-top:4px; }
   .row.needs { background:var(--hlw); }
-  iframe { width:100%; height:200px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  iframe {
+    display: block;
+    width: 100%;
+    height: clamp(500px, 75vh, 900px);
+    min-height: 500px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  #inline-editor {
+    margin: 0 0 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+  }
+
+  #inline-editor .bar {
+    margin-top: 8px;
+  }
+
+  #inline-editor select,
+  #inline-editor input {
+    max-width: 100%;
+    padding: 7px 9px;
+    font: inherit;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+  }
+
+  @media (max-width: 600px) {
+    iframe {
+      height: 65vh;
+      min-height: 400px;
+    }
+  }
+.preview-hint { color:var(--muted); font-size:.9rem; margin:0 0 8px; }
+
+.preview-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+.preview-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 22px;
+  height: 15px;
+  border-radius: 3px;
+}
+
+.legend-swatch.selected {
+  background: #fff3bf;
+  outline: 2px solid #2457d6;
+}
+
+.legend-swatch.matching {
+  background: #dcecff;
+  outline: 2px dashed #2457d6;
+  border-bottom: 2px dotted #2457d6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .legend-swatch.selected {
+    background: #4a4220;
+  }
+
+  .legend-swatch.matching {
+    background: #203b58;
+  }
+}
   #msg { margin-top:10px; } .err { color:var(--warn); } .ok { color:var(--ok); }
   [hidden] { display:none !important; }
 </style>
@@ -48,11 +198,39 @@
 
   <section id="review" hidden>
     <h2>2. Review languages</h2>
-    <p class="meta">Every tag is yours to confirm. Pick a language from the suggestions, or choose “Other…” and type a two-letter code (e.g. <code>ur</code>). Uncertain guesses are left untagged until you confirm them, and every row needs a language before you can finish.</p>
-    <div id="rows"></div>
+
+    <p class="meta">
+    High-confidence matches are applied automatically. Select any highlighted
+    span in the preview to review or change its language. Ambiguous and
+    unmapped text needs your attention before you can finish.
+  </p>
+
     <h2 style="margin-top:20px">Preview</h2>
-    <iframe id="preview" sandbox="" title="Preview of tagged HTML"></iframe>
-    <div class="bar"><button id="finalize">Finish and get final HTML</button></div>
+
+<p class="preview-hint">
+    Select a highlighted span to edit its language. Matching spans can be
+    updated together using the bulk-change control.
+  </p>
+
+<div class="preview-legend">
+  <span>
+    <span class="legend-swatch selected"></span>
+    Selected span (solid outline)
+  </span>
+  <span>
+    <span class="legend-swatch matching"></span>
+    Matching spans (dashed outline, dotted underline)
+  </span>
+</div>
+
+<div id="inline-editor" hidden aria-live="polite"></div>
+
+<iframe
+  id="preview"
+  sandbox="allow-same-origin"
+  title="Preview of tagged HTML"
+></iframe>
+<div class="bar"><button id="finalize">Finish and get final HTML</button></div>
     <div id="msg" role="status" aria-live="polite"></div>
   </section>
 
