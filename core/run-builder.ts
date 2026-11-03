@@ -75,11 +75,17 @@ function nearestAnchorScript(chunks: RawChunk[], index: number, direction: 1 | -
 }
 
 // 
-export function chunkify(graphemes: ScriptedGrapheme[], includeNumbers: boolean): Chunk[] {
+export function chunkify(graphemes: ScriptedGrapheme[], 
+                          includeNumbers: boolean,
+                          preserveHan = false): Chunk[] {
   const raw = mergeRawChunks(graphemes);
 
   return raw.map((c, i): Chunk => {
-    if (c.kind === 'punct') return { kind: 'attach', text: c.text };
+    if (c.kind === 'punct') {
+      return preserveHan
+      ? { kind: 'hardbreak', text: c.text }
+      : { kind: 'attach', text: c.text };
+    }
     if (c.kind === 'symbol') return { kind: 'hardbreak', text: c.text};
     if (c.kind !== 'digit') return c; // ws and anchor unchanged
 
@@ -201,7 +207,7 @@ export function reduceChunks(chunks: Chunk[]): Run[] {
         pushCommon(pendingAttachPrefix);
         pendingAttachPrefix = '';
       }
-      
+
         pushCommon(chunk.text);
       }
       continue;
@@ -229,7 +235,10 @@ export function reduceChunks(chunks: Chunk[]): Run[] {
 // Jpan; a Han-only cluster is left alone, because it could be Chinese.
 const JAPANESE_PARTS = new Set(['Han', 'Hiragana', 'Katakana']);
 
-export function unifyJapanese(graphemes: ScriptedGrapheme[]): ScriptedGrapheme[] {
+export function unifyJapanese(graphemes: ScriptedGrapheme[], 
+                              options: { preserveHan?: boolean} = {},
+  ): ScriptedGrapheme[] {
+  const { preserveHan = false } = options;
   const result = graphemes.map((g) => ({ ...g }));
   const inCluster = (g: ScriptedGrapheme) =>
     JAPANESE_PARTS.has(g.script) ||
@@ -254,7 +263,15 @@ export function unifyJapanese(graphemes: ScriptedGrapheme[]): ScriptedGrapheme[]
 
     if (hasKana) {
       for (let k = i; k < j; k++) {
-        if (JAPANESE_PARTS.has(result[k]!.script)) result[k]!.script = 'Jpan';
+        const script = result[k]!.script;
+
+        if (
+          script === 'Hiragana' ||
+          script === 'Katakana' ||
+          (script === 'Han' && !preserveHan)
+        ) {
+          result[k]!.script = 'Jpan';
+        }
       }
     }
     i = j;
@@ -266,9 +283,12 @@ export function unifyJapanese(graphemes: ScriptedGrapheme[]): ScriptedGrapheme[]
 
 export function buildRuns(
   graphemes: ScriptedGrapheme[],
-  options: { includeNumbers?: boolean } = {}
+  options: { includeNumbers?: boolean; preserveHan?: boolean } = {}
 ): Run[] {
-  const { includeNumbers = true } = options;
-  const chunks = chunkify(unifyJapanese(graphemes), includeNumbers);
+  const { includeNumbers = true, preserveHan = false } = options;
+  const chunks = chunkify(unifyJapanese(graphemes, { preserveHan }), 
+                          includeNumbers,
+                          preserveHan
+                        );
   return reduceChunks(chunks);
 }

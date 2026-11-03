@@ -70,7 +70,9 @@ export function insertSpans(runs: Run[]): string {
 
 export function textToSegments(
   text: string,
-  options: { includeNumbers?: boolean } = {},
+  options: { includeNumbers?: boolean;
+              preserveHan?: boolean;
+   } = {},
 ): Segment[] {
   return buildSegments(buildRuns(detectScripts(text), options));
 }
@@ -126,8 +128,17 @@ export function tagHtml(
   options: { includeNumbers?: boolean } = {},
 ): string {
   const fragment = parseFragment(input);
-  replaceTextNodes(fragment, (text, ctx) =>
-    dropAlreadyTagged(textToSegments(text, options), ctx.ancestorLang),
-  );
+  replaceTextNodes(fragment, (text, ctx) => {
+    const ancestor = ctx.ancestorLang
+      ? primaryLang(ctx.ancestorLang)
+      : '';
+
+    const preserveHan = ancestor === 'zh' || ancestor === 'ko';
+
+    return dropAlreadyTagged(
+      textToSegments(text, { ...options, preserveHan }),
+      ctx.ancestorLang,
+    );
+  });
   return serialize(fragment);
 }

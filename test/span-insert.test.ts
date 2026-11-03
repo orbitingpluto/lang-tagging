@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSegments, escapeHtml, segmentsToHtml, insertSpans } from '../core/span-insert';
+import { buildSegments, escapeHtml, segmentsToHtml, insertSpans, tagHtml, textToSegments } from '../core/span-insert';
 import type { Segment } from '../core/span-insert';
 import type { Run } from '../core/run-builder';
 
@@ -228,4 +228,15 @@ describe('insertSpans', () => {
   it('returns an empty string for no runs', () => {
     expect(insertSpans([])).toBe('');
   });
+
+
+  it('preserves Han text under a Chinese ancestor while tagging Japanese kana', () => {
+  const input =
+    '<p><span lang="zh">你好，こんにちは，世界！</span></p>';
+
+  const expected =
+  '<p><span lang="zh">你好，<span lang="ja" data-candidates="ja">こんにちは</span>，世界！</span></p>';
+    console.log(textToSegments('こんにちは'));
+  expect(tagHtml(input)).toBe(expected);
+});
 });
