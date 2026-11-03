@@ -96,5 +96,89 @@ describe('buildRuns', () => {
       { text: '你好', script: 'Han' },
     ]);
   });
+
+  it('does not attach em dashes to language runs', () => {
+  const runs = buildRuns(detectScripts('한국어—日本語'));
+
+  expect(runs).toEqual([
+    { text: '한국어', script: 'Hangul' },
+    { text: '—', script: 'Common' },
+    { text: '日本語', script: 'Han' },
+  ]);
+});
+
+it('does not attach digits to language runs when includeNumbers is false', () => {
+  expect(
+    buildRuns(detectScripts('한국어123!'), { includeNumbers: false })
+  ).toEqual([
+    { text: '한국어', script: 'Hangul' },
+    { text: '123!', script: 'Common' }
+  ]);
+});
+
+it('preserves currency expressions as Common text', () => {
+  const runs = buildRuns(detectScripts('한국어 $50.'));
+
+  expect(runs).toEqual([
+    { text: '한국어', script: 'Hangul' },
+    { text: ' $50.', script: 'Common' },
+  ]);
+});
+
+it('treats em dashes as hard boundaries', () => {
+  expect(run('한국어—日本語')).toEqual([
+  { text: '한국어', script: 'Hangul' },
+  { text: '—', script: 'Common' },
+  { text: '日本語', script: 'Han' }
+]);
+});
+
+it('does not attach numbers or punctuation after a hard boundary to the next run', () => {
+  expect(run('한국어—123!한국어')).toEqual([
+    { text: '한국어', script: 'Hangul' },
+    { text: '—123!', script: 'Common' },
+    { text: '한국어', script: 'Hangul' },
+  ]);
+});
+
+it('still attaches numbers to the preceding run when includeNumbers is true', () => {
+  expect(buildRuns(detectScripts('한국어123!'), {
+    includeNumbers: true,
+  })).toEqual([
+    { text: '한국어123!', script: 'Hangul' },
+  ]);
+});
+
+it('excludes numbers when includeNumbers is false', () => {
+  expect(buildRuns(detectScripts('한국어123!'), {
+    includeNumbers: false,
+  })).toEqual([
+    { text: '한국어', script: 'Hangul' },
+    { text: '123!', script: 'Common' },
+  ]);
+});
+
+it('keeps currency expressions outside language spans', () => {
+  expect(run('한국어 $50.')).toEqual([
+    { text: '한국어', script: 'Hangul' },
+    { text: ' $50.', script: 'Common' },
+  ]);
+});
+
+it('preserves whitespace around hard boundaries', () => {
+  expect(run('한국어 — 日本語')).toEqual([
+  { text: '한국어', script: 'Hangul' },
+  { text: ' — ', script: 'Common' },
+  { text: '日本語', script: 'Han' }
+]);
+});
+
+it('recognizes Japanese after an em dash when kana is present', () => {
+  expect(run('한국어—日本語かな')).toEqual([
+    { text: '한국어', script: 'Hangul' },
+    { text: '—', script: 'Common' },
+    { text: '日本語かな', script: 'Jpan' }
+  ]);
+});
 });
 

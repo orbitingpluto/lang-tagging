@@ -16,7 +16,8 @@ type RawChunk =
   | { kind: 'symbol'; text: string };
 
 function isPunctuation(text: string): boolean {
-  return /^\p{P}\p{M}*$/u.test(text);
+  return /^\p{P}\p{M}*$/u.test(text) &&
+    !/^\p{Pd}\p{M}*$/u.test(text);
 }
 
 function classifyRaw(text: string, script: string): RawChunk {
@@ -116,66 +117,95 @@ export function reduceChunks(chunks: Chunk[]): Run[] {
   let currentRun: Run | null = null;
   let pendingAttachPrefix = '';
 
+  // Whether unattached punctuation/numbers may prefix the next language run.
+  // A hard boundary disables this until the next anchor is reached.
+  let allowPendingAttachPrefix = true;
+
   const closeRun = () => {
     if (currentRun) runArr.push(currentRun);
     currentRun = null;
   };
 
+  const pushCommon = (text: string) => {
+    const last = runArr[runArr.length - 1];
+
+    // Merge adjacent Common entries to avoid unnecessary fragmentation.
+    if (last && last.script === 'Common') {
+      last.text += text;
+    } else {
+      runArr.push({ text, script: 'Common' });
+    }
+  };
+
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]!;
 
-    // extend existing same-script run, otherwise close and start new one
+    // Extend existing same-script run, otherwise close and start new one.
     if (chunk.kind === 'anchor') {
       if (currentRun && currentRun.script === chunk.script) {
         currentRun.text += chunk.text;
       } else {
         closeRun();
-        currentRun = { text: pendingAttachPrefix + chunk.text, script: chunk.script };
+        currentRun = {
+          text: pendingAttachPrefix + chunk.text,
+          script: chunk.script,
+        };
         pendingAttachPrefix = '';
       }
+
+      allowPendingAttachPrefix = true;
       continue;
     }
 
-    // append punct/digits to existing chunk, otherwise pending
+    // Append punctuation/digits to existing run, otherwise hold as prefix
+    // only if no hard boundary has intervened.
     if (chunk.kind === 'attach') {
       if (currentRun) {
-        currentRun.text += chunk.text; // touching the run being built — always joins
+        currentRun.text += chunk.text;
+      } else if (allowPendingAttachPrefix) {
+        pendingAttachPrefix += chunk.text;
       } else {
-        pendingAttachPrefix += chunk.text; // leading punctuation, waits for the next anchor
+        pushCommon(chunk.text);
       }
       continue;
     }
 
-    // excluded digit always forces break. adds as standalone Common entry
+    // Hardbreak closes the current run and prevents subsequent unattached
+    // chunks from becoming a prefix of the next language run.
     if (chunk.kind === 'hardbreak') {
       closeRun();
+
       if (pendingAttachPrefix) {
-        runArr.push({ text: pendingAttachPrefix, script: 'Common' });
+        pushCommon(pendingAttachPrefix);
         pendingAttachPrefix = '';
       }
-      runArr.push({ text: chunk.text, script: 'Common' });
+
+      pushCommon(chunk.text);
+      allowPendingAttachPrefix = false;
       continue;
     }
 
-    // look ahead to find the next script.
-    // if run open and match, ws joins run
-    // otherwise close run and push ws as own entry
+    // Look ahead to find the next script.
+    // If run open and match, whitespace joins the run.
+    // Otherwise close run and push whitespace as Common.
     if (chunk.kind === 'ws') {
       const nextScript = nextAnchorScript(chunks, i + 1);
+
       if (currentRun && nextScript === currentRun.script) {
-        currentRun.text += chunk.text; // same script on both sides — joins
+        currentRun.text += chunk.text;
       } else {
         closeRun();
-        runArr.push({ text: chunk.text, script: 'Common' });
+        pushCommon(chunk.text);
       }
       continue;
     }
   }
 
-  // flush whatever is still open and/or orphaned pending
+  // Flush whatever is still open and/or orphaned pending.
   closeRun();
+
   if (pendingAttachPrefix) {
-    runArr.push({ text: pendingAttachPrefix, script: 'Common' });
+    pushCommon(pendingAttachPrefix);
   }
 
   return runArr;
@@ -196,7 +226,12 @@ export function unifyJapanese(graphemes: ScriptedGrapheme[]): ScriptedGrapheme[]
   const result = graphemes.map((g) => ({ ...g }));
   const inCluster = (g: ScriptedGrapheme) =>
     JAPANESE_PARTS.has(g.script) ||
-   (g.script === 'Common' && (isPunctuation(g.text) || /^\d$/u.test(g.text)));
+   (g.script === 'Common' && 
+    (
+      isPunctuation(g.text) ||
+      /^\p{Pd}\p{M}*$/u.test(g.text) ||
+      /^\d$/u.test(g.text)
+    ));
 
   let i = 0;
   while (i < result.length) {

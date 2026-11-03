@@ -18,9 +18,7 @@ describe('buildRuns — numbers toggle', () => {
     const result = run('الفصل رقم 12 يبدأ من هنا.', false);
     expect(result).toEqual([
   { text: 'الفصل رقم', script: 'Arabic' },
-  { text: ' ', script: 'Common' },
-  { text: '12', script: 'Common' },
-  { text: ' ', script: 'Common' },
+  { text: ' 12 ', script: 'Common' },
   { text: 'يبدأ من هنا.', script: 'Arabic' },
 ]);
   });
@@ -29,9 +27,7 @@ describe('buildRuns — numbers toggle', () => {
     const result = run('صفحة 123 التالية', false);
     expect(result).toEqual([
       { text: 'صفحة', script: 'Arabic' },
-      { text: ' ', script: 'Common' },
-      { text: '123', script: 'Common' },
-      { text: ' ', script: 'Common' },
+      { text: ' 123 ', script: 'Common' },
       { text: 'التالية', script: 'Arabic' },
     ]);
   });
