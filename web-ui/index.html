@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Non-Latin Tagger</title>
+<title>Non-Latin Language Tagger</title>
 <style>
   :root {
-  --bg: #f4f5f9;
+  --bg: #fafafc;
   --surface: #ffffff;
   --fg: #20243a;
   --muted: #697087;
   --line: #e3e5ed;
-  --accent: #5146d8;
+  --accent: #18453B;
   --warn: #a64b24;
   --ok: #237a55;
   --hl: #f1efff;
@@ -162,6 +162,39 @@ section {
       min-height: 400px;
     }
   }
+
+  .info-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .info-btn {
+    border-radius: 50%;
+    width: 1.5em;
+    height: 1.5em;
+    padding: 0 0 0 0;
+    font-size: 0.7em;
+    line-height: 1.4em;
+    cursor: pointer;
+  }
+  .info-popup {
+    display: none;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    padding: 0.5rem 0.75rem;
+    background: #222;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    z-index: 10;
+  }
+  .info-wrap:hover .info-popup,
+  .info-wrap:focus-within .info-popup {
+    display: block;
+  }
+
 .preview-hint { color:var(--muted); font-size:.9rem; margin:0 0 8px; }
 
 .preview-legend {
@@ -217,8 +250,8 @@ section {
 </head>
 <body>
 <main>
-  <h1>Non-Latin Tagger</h1>
-  <p class="sub">Wraps non-Latin text in <code>&lt;span lang="…"&gt;</code> so screen readers pronounce it correctly. Paste an HTML fragment (body content only), review each tag, then copy the final HTML.</p>
+  <h1>Non-Latin Language Tagger</h1>
+  <p class="sub">Wraps non-Latin text in <code>&lt;span lang="…"&gt;</code> so screen readers pronounce it correctly. Paste an HTML fragment (body content only, e.g., PressBooks code editor), review each tag, then copy the final HTML.</p>
 
   <div class="side-by-side">
   <section id="paste">
@@ -226,8 +259,11 @@ section {
     <label for="input" class="meta">HTML fragment</label>
     <textarea id="input" spellcheck="false" placeholder="<p>Hello, <em>مرحبا</em>…</p>"></textarea>
     <div class="bar">
-      <label><input type="checkbox" id="numbers" checked> Tag numbers next to non-Latin text</label>
-      <button id="tag">Find non-Latin text</button>
+      <label><input type="checkbox" id="numbers" checked> Tag numbers next to non-Latin text</label><span class="info-wrap">
+    <button type="button" class="info-btn" aria-label="More information">i</button>
+    <span role="tooltip" class="info-popup">Click this if the numbers should be read out as the tagged language (e.g., in a basic language textbook where students have learned the numbers)</span>
+  </span>
+      <button id="tag">Detect & tag non-Latin text</button>
     </div>
   </section>
 
@@ -276,6 +312,7 @@ section {
 
   <section id="result" hidden>
     <h2>3. Final HTML</h2>
+    <p>This can be pasted right back into a code editor of a WYSIWYG editor (e.g., PressBooks code editor)</p>
     <textarea id="output" readonly spellcheck="false"></textarea>
     <div class="bar"><button id="copy" class="secondary">Copy to clipboard</button></div>
   </section>
